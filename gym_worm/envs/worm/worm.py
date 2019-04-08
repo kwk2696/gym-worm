@@ -51,11 +51,14 @@ class Worm():
     def check_eaten_trash(self, trash, num_trash = None):
         ate = 0
         
+        if(len(self.coordinate) < 1): print("len == 0")
+        if(len(trash) < num_trash): print("assert")
         for i in range(num_trash):
             if self.coordinate[HEAD]['x'] == trash[i].x and self.coordinate[HEAD]['y'] == trash[i].y:
                 trash[i].set_random_position()
                 del self.coordinate[-1]
                 ate = 1
+                break
         
         if ate == 0:
             return 0

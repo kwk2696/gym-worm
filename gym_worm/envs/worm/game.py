@@ -35,7 +35,7 @@ class Game():
 
         assert self.window_width % self.cell_size == 0, "Window width must be a multiple of cell size."
         assert self.window_height % self.cell_size == 0, "Window height must be a multiple of cell size."
-
+        
         self.cell_width = int(self.window_width / self.cell_size)
         self.cell_height = int(self.window_height / self.cell_size)
         
@@ -45,15 +45,15 @@ class Game():
         self.score = self.checkScore()
         
         #check object is overlapped1
-        while True:
+        while True:            
             overlap = self.check_overlapped_object()
             if(overlap == 0):
                 break;
             elif(overlap > 0):            
                 self.gold[overlap].set_random_position()
             else:
-                self.trash[overlap].set_random_position()
-                
+                self.trash[-overlap].set_random_position()
+               
         self.grid = Grid(self.cell_width, self.cell_height, self.worm, self.gold, self.trash)
     
         pygame.init()
@@ -75,18 +75,21 @@ class Game():
         self.worm.set_direction(direct)
         self.worm.move_to_direction()
         
+        #check if worm has hit itself or the edge
         if self.worm.check_collision() == True:
-            return self.grid.grid.copy(), -1, True, {"Score":self.score}
+            return self.grid.grid.copy(), -1, True, {"Score":self.score, "End":1, "Action": direct,
+            "HEADx":self.worm.coordinate[0]['x'], "HEADy":self.worm.coordinate[0]['y']}
 
-        #check worm gets gold
+        #check worm gets gold/trash
         self.reward_g = self.worm.check_eaten_gold(self.gold, num_gold)
         self.reward_t = self.worm.check_eaten_trash(self.trash, num_trash)
         
         self.reward = self.reward_g + self.reward_t
         self.score = self.checkScore()
         
+        #check if worm is dead
         if self.check_worm_dead():
-            return self.grid.grid.copy(), -1, True, {"Score":self.score}
+            return self.grid.grid.copy(), -1, True, {"Score":self.score, "End":2, "Action": direct}
         
         self.old_grid = self.grid.grid.copy()
         
@@ -98,7 +101,7 @@ class Game():
             elif(overlap > 0):            
                 self.gold[overlap].set_random_position()
             else:
-                self.trash[overlap].set_random_position()
+                self.trash[-overlap].set_random_position()
         
         #update grid        
         self.grid.update_grid(self.worm, self.gold, self.trash)

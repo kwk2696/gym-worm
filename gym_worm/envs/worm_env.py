@@ -8,7 +8,7 @@ class WormEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     
     # TODO: define observation_space
-    def __init__(self, grid_width = 640, grid_height = 480, cell_size = 10, 
+    def __init__(self, grid_width = 150, grid_height = 150, cell_size = 10, 
     n_worm = 1, n_gold = 1, n_trash = 1):
         self.action_space = spaces.Discrete(4)
         self.viewer = None
