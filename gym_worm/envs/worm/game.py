@@ -22,8 +22,8 @@ DARKGRAY  = ( 40,  40,  40)
 BGCOLOR = BLACK
 
 #NUMBER of objects
-num_gold = 10
-num_trash = 10
+num_gold = 5
+num_trash = 1
 
 class Game():
 
@@ -75,17 +75,25 @@ class Game():
         self.worm.set_direction(direct)
         self.worm.move_to_direction()
         
+        #update grid        
+        self.grid.update_grid(self.worm, self.gold, self.trash)
+        
         #check if worm has hit itself or the edge
         if self.worm.check_collision() == True:
             return self.grid.grid.copy(), -1, True, {"Score":self.score, "End":1, "Action": direct,
             "HEADx":self.worm.coordinate[0]['x'], "HEADy":self.worm.coordinate[0]['y']}
 
         #check worm gets gold/trash
+        self.reward = 0.0
         self.reward_g = self.worm.check_eaten_gold(self.gold, num_gold)
         self.reward_t = self.worm.check_eaten_trash(self.trash, num_trash)
         
-        self.reward = self.reward_g + self.reward_t
+        self.reward += self.reward_g 
+        self.reward += self.reward_t
         self.score = self.checkScore()
+        
+        #update grid        
+        self.grid.update_grid(self.worm, self.gold, self.trash)
         
         #check if worm is dead
         if self.check_worm_dead():
@@ -105,9 +113,9 @@ class Game():
         
         #update grid        
         self.grid.update_grid(self.worm, self.gold, self.trash)
-        #print(self.grid.grid.copy())
         
-        return self.old_grid, self.reward, False, {"Score":self.score}
+        
+        return self.grid.grid.copy(), self.reward, False, {"Score":self.score}
     
     def check_worm_dead(self):
         if len(self.worm.coordinate) == 0:
