@@ -29,9 +29,14 @@ class Worm():
     def check_collision(self):
         if self.coordinate[HEAD]['x'] == -1 or self.coordinate[HEAD]['x'] == self.cell_width or self.coordinate[HEAD]['y'] == -1 or self.coordinate[HEAD]['y'] == self.cell_height:
             return True
-        for wormBody in self.coordinate[1:]:
-            if wormBody['x'] == self.coordinate[HEAD]['x'] and wormBody['y'] == self.coordinate[HEAD]['y']:
-                return True
+            
+        length = len(self.coordinate) - 1
+        if self.coordinate[HEAD]['x'] == self.coordinate[length]['x'] and self.coordinate[HEAD]['y'] == self.coordinate[length]['y']:
+            return True
+            
+        # for wormBody in self.coordinate[1:]:
+            # if wormBody['x'] == self.coordinate[HEAD]['x'] and wormBody['y'] == self.coordinate[HEAD]['y']:
+                # return True
         return False
 
     def check_eaten_gold(self, gold, num_gold = None):
@@ -46,6 +51,7 @@ class Worm():
             del self.coordinate[-1]
             return 0
         else:
+            #del self.coordinate[-1] #delete this
             return 1
             
     def check_eaten_trash(self, trash, num_trash = None):
@@ -75,6 +81,17 @@ class Worm():
         elif (key == K_DOWN or key == K_s) and self.direction != UP:
             self.direction = DOWN
 
+    def check_direction(self, key):
+        if (key == K_LEFT or key == K_a) and self.direction == RIGHT:
+            return 1
+        elif (key == K_RIGHT or key == K_d) and self.direction == LEFT:
+            return 1
+        elif (key == K_UP or key == K_w) and self.direction == DOWN:
+            return 1
+        elif (key == K_DOWN or key == K_s) and self.direction == UP:
+            return 1
+        return 0
+            
     def move_to_direction(self):
         # move the worm by adding a segment in the direction it is moving
         if self.direction == UP:

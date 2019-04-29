@@ -21,18 +21,16 @@ DARKGREEN = (  0, 155,   0)
 DARKGRAY  = ( 40,  40,  40)
 BGCOLOR = BLACK
 
-#NUMBER of objects
-num_gold = 5
-num_trash = 1
-
 class Game():
 
-    def __init__(self, window_width = 150, window_height = 150, cell_size = 10):
+    def __init__(self, window_width, window_height, cell_size, n_gold, n_trash):
         
         self.window_width = window_width
         self.window_height = window_height
         self.cell_size = cell_size
-
+        self.n_gold = n_gold
+        self.n_trash = n_trash
+        
         assert self.window_width % self.cell_size == 0, "Window width must be a multiple of cell size."
         assert self.window_height % self.cell_size == 0, "Window height must be a multiple of cell size."
         
@@ -40,21 +38,21 @@ class Game():
         self.cell_height = int(self.window_height / self.cell_size)
         
         self.worm = Worm(self.cell_width, self.cell_height)
-        self.gold = [Gold(self.cell_width, self.cell_height) for i in range(num_gold)]
-        self.trash = [Trash(self.cell_width, self.cell_height) for i in range(num_trash)]
+        self.gold = [Gold(self.cell_width, self.cell_height) for i in range(self.n_gold)]
+        self.trash = [Trash(self.cell_width, self.cell_height) for i in range(self.n_trash)]
         self.score = self.checkScore()
         
         #check object is overlapped1
-        while True:            
+        while True:
             overlap = self.check_overlapped_object()
             if(overlap == 0):
                 break;
-            elif(overlap > 0):            
-                self.gold[overlap].set_random_position()
-            else:
-                self.trash[-overlap].set_random_position()
+            elif(overlap == 1):            
+                self.gold[0].set_random_position()
+            elif(overlap == 2):
+                self.trash[0].set_random_position()
                
-        self.grid = Grid(self.cell_width, self.cell_height, self.worm, self.gold, self.trash)
+        self.grid = Grid(self.cell_width, self.cell_height, self.worm, self.gold, self.trash, self.n_gold, self.n_trash)
     
         pygame.init()
         self.fps_clock = pygame.time.Clock()
@@ -64,29 +62,30 @@ class Game():
         
     def step(self, action):
         if action == 0:
-            direct = 273
+            direct = 273 #UP
         elif action == 1:
-            direct = 274
+            direct = 274 #Down
         elif action == 2:
-            direct = 275
+            direct = 275 #Right
         else:
-            direct = 276
+            direct = 276 #Left 
             
         self.worm.set_direction(direct)
         self.worm.move_to_direction()
+        
+        #check worm gets gold
+        self.reward = 0
+        self.reward_g = self.worm.check_eaten_gold(self.gold, self.n_gold)
         
         #update grid        
         self.grid.update_grid(self.worm, self.gold, self.trash)
         
         #check if worm has hit itself or the edge
         if self.worm.check_collision() == True:
-            return self.grid.grid.copy(), -1, True, {"Score":self.score, "End":1, "Action": direct,
-            "HEADx":self.worm.coordinate[0]['x'], "HEADy":self.worm.coordinate[0]['y']}
+            return self.grid.grid.copy(), -1, True, {"Score":self.score, "End":1, "Action": direct}
 
-        #check worm gets gold/trash
-        self.reward = 0.0
-        self.reward_g = self.worm.check_eaten_gold(self.gold, num_gold)
-        self.reward_t = self.worm.check_eaten_trash(self.trash, num_trash)
+        #check worm gets trash
+        self.reward_t = self.worm.check_eaten_trash(self.trash, self.n_trash)
         
         self.reward += self.reward_g 
         self.reward += self.reward_t
@@ -99,17 +98,16 @@ class Game():
         if self.check_worm_dead():
             return self.grid.grid.copy(), -1, True, {"Score":self.score, "End":2, "Action": direct}
         
-        self.old_grid = self.grid.grid.copy()
         
         #check object is overlapped2
         while True:
             overlap = self.check_overlapped_object()
             if(overlap == 0):
                 break;
-            elif(overlap > 0):            
-                self.gold[overlap].set_random_position()
-            else:
-                self.trash[-overlap].set_random_position()
+            elif(overlap == 1):            
+                self.gold[0].set_random_position()
+            elif(overlap == 2):
+                self.trash[0].set_random_position()
         
         #update grid        
         self.grid.update_grid(self.worm, self.gold, self.trash)
@@ -121,26 +119,43 @@ class Game():
         if len(self.worm.coordinate) == 0:
             return True
         return False   
-        
+    
     def check_overlapped_object(self):
+        #check gold
+        for wormBody in self.worm.coordinate:
+            if wormBody['x'] == self.gold[0].x and wormBody['y'] == self.gold[0].y:
+                return 1
+        
+        if self.n_trash > 0: 
+            #check trash
+            for wormBody in self.worm.coordinate:
+                if wormBody['x'] == self.trash[0].x and wormBody['y'] == self.trash[0].y:
+                    return 2
+                    
+            if self.trash[0].x == self.gold[0].x and self.trash[0].y == self.gold[0].y:
+                return 1
+            
+        return 0
+        
+    # def check_overlapped_object(self):
         #check gold & worm
-        for wormBody in self.worm.coordinate:
-            for i in range(num_gold):
-                if wormBody['x'] == self.gold[i].x and wormBody['y'] == self.gold[i].y:
-                    return i
+        # for wormBody in self.worm.coordinate:
+            # for i in range(num_gold):
+                # if wormBody['x'] == self.gold[i].x and wormBody['y'] == self.gold[i].y:
+                    # return i
           
-        #check trash
-        for wormBody in self.worm.coordinate:
-            for i in range(num_trash):
-                if wormBody['x'] == self.trash[i].x and wormBody['y'] == self.trash[i].y:
-                    return -i
+        # check trash & worm 
+        # for wormBody in self.worm.coordinate:
+            # for i in range(num_trash):
+                # if wormBody['x'] == self.trash[i].x and wormBody['y'] == self.trash[i].y:
+                    # return -i
         
         #check gold & worm        
-        for i in range(num_gold):
-            for j in range(num_trash):
-                if self.gold[i].x == self.trash[j].x and self.gold[i].y == self.trash[j].y:
-                    return i          
-        return 0
+        # for i in range(num_gold):
+            # for j in range(num_trash):
+                # if self.gold[i].x == self.trash[j].x and self.gold[i].y == self.trash[j].y:
+                    # return i          
+        # return -1
         
     def checkScore(self):
         return len(self.worm.coordinate) - 3
@@ -175,14 +190,14 @@ class Game():
 
     def drawGold(self):
         #for gold in self.gold:
-        for i in range(num_gold):
+        for i in range(self.n_gold):
             x = self.gold[i].x * self.cell_size
             y = self.gold[i].y * self.cell_size
             goldRect = pygame.Rect(x, y, self.cell_size, self.cell_size)
             pygame.draw.rect(self.display_surf, YELLOW, goldRect)
 		
     def drawTrash(self):
-        for i in range(num_trash):
+        for i in range(self.n_trash):
             x = self.trash[i].x * self.cell_size
             y = self.trash[i].y * self.cell_size
             trashRect = pygame.Rect(x, y, self.cell_size, self.cell_size)
@@ -195,11 +210,3 @@ class Game():
         for y in range(0, self.window_width, self.cell_size): # draw horizontal lines
             pygame.draw.line(self.display_surf, DARKGRAY, (0, y), (self.window_width, y))
             
-# if __name__ == '__main__':
-    # wormy = Game()
-    # wormy.update_display()
-    
-    # while True:
-        # x = int(input())
-        # wormy.step(x)
-        # wormy.update_display()

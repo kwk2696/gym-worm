@@ -10,7 +10,7 @@ class WormEnv(gym.Env):
     
     # TODO: define observation_space
     def __init__(self, grid_width = 150, grid_height = 150, cell_size = 10, 
-    n_worm = 1, n_gold = 1, n_trash = 1):
+    n_worm = 1, n_gold = 1, n_trash = 0):
         self.width = grid_width
         self.height = grid_height
         self.cell_size = cell_size
@@ -20,9 +20,11 @@ class WormEnv(gym.Env):
         self.cell_width = int(self.width / self.cell_size)
         self.cell_height = int(self.height / self.cell_size)
         
-        #self.seed()
         self.action_space = spaces.Discrete(4)
-        self.observation_space = spaces.Box(low = 0, high = 255, shape = (self.cell_height, self.cell_width, 3), dtype=np.uint8)
+        self.observation_size = self.n_gold + self.n_trash + 1
+        self.observation_space = spaces.Box(low = -100, high = 100, shape = (self.observation_size,2))
+        
+        #self.observation_space = spaces.Box(low = 0, high = 3, shape = (self.cell_height, self.cell_width, 1))
         self.viewer = None
         
     def step(self, action):
@@ -30,7 +32,7 @@ class WormEnv(gym.Env):
         return obs, reward, done, info
         
     def reset(self):
-        self.game = Game(self.width, self.height, self.cell_size)
+        self.game = Game(self.width, self.height, self.cell_size, self.n_gold, self.n_trash)
         obs = self.game.grid.grid.copy()
         return obs
 
@@ -38,6 +40,4 @@ class WormEnv(gym.Env):
         return self.game.update_display()
     
     def seed(self, seed=None):
-        # self.np_random, seed = seeding.np_random(seed)
-        # return [seed]
         pass
