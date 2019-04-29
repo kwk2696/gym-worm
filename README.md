@@ -63,7 +63,8 @@ for i_episode in range(2):
             break
 env.close()
 ```
-####Reinforcement Learning
+
+#### Reinforcement Learning
 Using [stable-baselines](https://github.com/hill-a/stable-baselines) to apply reienforcement learning to worm game.
 
 Following is the example code to apply reinforcement learning using **DQN** with **mlp policy**:
